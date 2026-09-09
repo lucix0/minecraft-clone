@@ -71,3 +71,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     "-framework CoreMedia"
     "-framework VideoToolbox"
 )
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/shaders/bin
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders
+    COMMENT "Copying shader binaries to output directory"
+)

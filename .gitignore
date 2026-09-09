@@ -1,3 +1,4 @@
 build/
 third_party/*
+shaders/bin/
 .DS_Store
