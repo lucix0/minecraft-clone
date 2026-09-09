@@ -11,8 +11,10 @@ VERTEX_BIN = $(SHADER_DIR)/bin/vs_triangle.bin
 FRAGMENT_BIN = $(SHADER_DIR)/bin/fs_triangle.bin
 
 all: $(VERTEX_BIN) $(FRAGMENT_BIN)
+	mkdir -p shaders/bin
 
 $(VERTEX_BIN): $(VERTEX_SHADER)
+	mkdir -p shaders/bin
 	$(SHADERC) -f $< -o $@ \
 		--type vertex \
 		--platform osx \
@@ -21,6 +23,7 @@ $(VERTEX_BIN): $(VERTEX_SHADER)
 		-i $(BGFX_SRC)
 
 $(FRAGMENT_BIN): $(FRAGMENT_SHADER)
+	mkdir -p shaders/bin
 	$(SHADERC) -f $< -o $@ \
 		--type fragment \
 		--platform osx \
