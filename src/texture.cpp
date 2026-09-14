@@ -1,0 +1,16 @@
+#include <include/texture.h>
+#include <include/stb_image.h>
+
+Texture::Texture(const std::string& file_name) {
+    int imageWidth, imageHeight, imageChannels;
+    unsigned char *img = stbi_load(std::string("textures/" + file_name).c_str(), &imageWidth, &imageHeight, &imageChannels, 4);
+    if (img == nullptr) {
+        printf("Error in loading the image\n");
+        exit(1);
+    }
+
+    m_handle = bgfx::createTexture2D(imageWidth, imageHeight, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(img, imageWidth * imageHeight * 4));
+    stbi_image_free(img);
+}
+
+Texture::~Texture() { bgfx::destroy(m_handle); }

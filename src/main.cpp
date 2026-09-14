@@ -4,9 +4,13 @@
 #include <string>
 #include <bx/bx.h>
 #include <bgfx/bgfx.h>
+#include <include/stb_image.h>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+
+#include "mesh.h"
+#include "include/application.h"
 
 #if BX_PLATFORM_LINUX
     #define GLFW_EXPOSE_NATIVE_X11
@@ -19,163 +23,143 @@
     #include <GLFW/glfw3native.h>
 #endif
 
-#include "camera.hpp"
+#include "include/camera.h"
+#include "include/shader_program.h"
+#include "material.h"
 
 struct Vertex {
     float x, y, z;
     float r, g, b;
+    float u, v;
 };
 
-std::vector<Vertex> triangle = {
-    Vertex { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f },
-    Vertex { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f },
-    Vertex { 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f },
-};
+class MinecraftClone : public application {
+public:
+    Camera camera;
+    bgfx::VertexLayout layout;
+    bgfx::VertexBufferHandle vbHandle = BGFX_INVALID_HANDLE;
+    std::unique_ptr<Material> material;
+    Mesh mesh;
 
-bgfx::ShaderHandle loadShader(const std::string& path) {
-    std::ifstream file(path, std::ios::binary | std::ios::ate);
-    if (!file.is_open()) {
-        std::cerr << "Failed to open shader file: " << path << "\n";
-        return BGFX_INVALID_HANDLE;
-    }
+    double lastMouseX = 0.0, lastMouseY = 0.0;
+    bool firstMouse = true;
 
-    std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
+    std::vector<Vertex> triangle = {
+        // Front face
+        Vertex { -1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f },
+        Vertex {  1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+        Vertex {  0.0f, 1.5f,  0.0f, 0.0f, 0.0f, 1.0f, 0.5f, 0.0f },
 
-    // bgfx::copy makes an internal copy bgfx owns and frees itself —
-    // safest option so you don't have to manage the buffer's lifetime.
-    const bgfx::Memory* mem = bgfx::alloc(static_cast<uint32_t>(size) + 1);
-    if (!file.read(reinterpret_cast<char*>(mem->data), size)) {
-        std::cerr << "Failed to read shader file: " << path << "\n";
-        return BGFX_INVALID_HANDLE;
-    }
-    mem->data[size] = '\0'; // bgfx expects a null terminator on shader binaries
+        // Right face
+        Vertex {  1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f },
+        Vertex {  1.0f, 0.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+        Vertex {  0.0f, 1.5f,  0.0f, 0.0f, 0.0f, 1.0f, 0.5f, 0.0f },
 
-    return bgfx::createShader(mem);
-}
+        // Back face
+        Vertex {  1.0f, 0.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f },
+        Vertex { -1.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f },
+        Vertex {  0.0f, 1.5f,  0.0f, 0.0f, 0.0f, 1.0f, 0.5f, 0.0f },
 
-double lastMouseX = 0.0, lastMouseY = 0.0;
-bool firstMouse = true;
+        // Left face
+        Vertex { -1.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f },
+        Vertex { -1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f },
+        Vertex {  0.0f, 1.5f,  0.0f, 0.0f, 0.0f, 1.0f, 0.5f, 0.0f },
 
-void processInput(GLFWwindow* window, Camera& camera, float deltaTime) {
-    const float moveSpeed = 5.0f * deltaTime;
-    const float lookSpeed = 0.0025f;
+        // Base triangle 1
+        Vertex { -1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+        Vertex {  1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f },
+        Vertex {  1.0f, 0.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
 
-    bx::Vec3 forward = camera.getForward();
-    bx::Vec3 right   = camera.getRight();
+        // Base triangle 2
+        Vertex { -1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+        Vertex {  1.0f, 0.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+        Vertex { -1.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f },
+    };
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.position = bx::add(camera.position, bx::mul(forward, moveSpeed));
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.position = bx::sub(camera.position, bx::mul(forward, moveSpeed));
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.position = bx::add(camera.position, bx::mul(right, moveSpeed));
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.position = bx::sub(camera.position, bx::mul(right, moveSpeed));
+protected:
+    void processInput(GLFWwindow* window, Camera& camera, float deltaTime) {
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            shouldClose = true;
 
-    double mouseX, mouseY;
-    glfwGetCursorPos(window, &mouseX, &mouseY);
+        const float moveSpeed = 5.0f * deltaTime;
+        const float lookSpeed = 0.0025f;
 
-    if (firstMouse) {
+        bx::Vec3 forward = camera.getForward();
+        bx::Vec3 right   = camera.getRight();
+
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera.position = bx::add(camera.position, bx::mul(forward, moveSpeed));
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera.position = bx::sub(camera.position, bx::mul(forward, moveSpeed));
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera.position = bx::add(camera.position, bx::mul(right, moveSpeed));
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera.position = bx::sub(camera.position, bx::mul(right, moveSpeed));
+
+        double mouseX, mouseY;
+        glfwGetCursorPos(window, &mouseX, &mouseY);
+
+        if (firstMouse) {
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+            firstMouse = false;
+        }
+
+        float deltaX = float(mouseX - lastMouseX);
+        float deltaY = float(mouseY - lastMouseY);
         lastMouseX = mouseX;
         lastMouseY = mouseY;
-        firstMouse = false;
+
+        camera.yaw   += deltaX * lookSpeed;
+        camera.pitch -= deltaY * lookSpeed;
+
+        // Clamp pitch to avoid flipping over at the poles
+        const float limit = bx::kPiHalf - 0.01f;
+        camera.pitch = bx::clamp(camera.pitch, -limit, limit);
     }
 
-    float deltaX = float(mouseX - lastMouseX);
-    float deltaY = float(mouseY - lastMouseY);
-    lastMouseX = mouseX;
-    lastMouseY = mouseY;
+    void onInit() override {
+        layout
+            .begin()
+            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Color0, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+            .end();
 
-    camera.yaw   += deltaX * lookSpeed;
-    camera.pitch -= deltaY * lookSpeed;
-
-    // Clamp pitch to avoid flipping over at the poles
-    const float limit = bx::kPiHalf - 0.01f;
-    camera.pitch = bx::clamp(camera.pitch, -limit, limit);
-}
-
-int main() {
-    if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW\n";
-        return -1;
+        mesh.upload(triangle.data(), triangle.size(), layout);
+        material = std::make_unique<Material>("test.png", "triangle");
     }
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-    const int width = 1280;
-    const int height = 720;
-
-    GLFWwindow* window = glfwCreateWindow(width, height, "Minecraft Clone", nullptr, nullptr);
-    if (!window) {
-        std::cerr << "Failed to create GLFW window\n";
-        glfwTerminate();
-        return -1;
+    void onUpdate(float dt) override {
+        processInput(window, camera, dt);
     }
 
-    bgfx::renderFrame();
-
-    bgfx::Init init;
-    init.swapChain.nwh = glfwGetCocoaWindow(window);
-    init.type = bgfx::RendererType::Count;
-    init.swapChain.width = 1280;
-    init.swapChain.height = 720;
-    init.reset = BGFX_RESET_VSYNC;
-
-    if (!bgfx::init(init)) {
-        std::cerr << "Failed to initialize BGFX\n";
-        glfwDestroyWindow(window);
-        glfwTerminate();
-        return -1;
-    }
-
-    const bgfx::ViewId kClearView = 0;
-    bgfx::setViewClear(kClearView, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
-    bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
-
-    bgfx::VertexLayout layout;
-    layout
-        .begin() 
-        .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-        .add(bgfx::Attrib::Color0, 3, bgfx::AttribType::Float)
-        .end();
-    
-    const bgfx::Memory* mem = bgfx::copy(triangle.data(), static_cast<uint32_t>(triangle.size() * sizeof(Vertex)));
-    bgfx::VertexBufferHandle vbHandle = bgfx::createVertexBuffer(mem, layout);
-
-    // Load shaders and create program
-    bgfx::ShaderHandle vsh = loadShader("shaders/vs_triangle.bin");
-    bgfx::ShaderHandle fsh = loadShader("shaders/fs_triangle.bin");
-    bgfx::ProgramHandle program = bgfx::createProgram(vsh, fsh, true);
-
-    Camera camera;
-    double lastFrameTime = glfwGetTime();
-
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
-
-        double currentTime = glfwGetTime();
-        float deltaTime = float(currentTime - lastFrameTime);
-        lastFrameTime = currentTime;
-
-        processInput(window, camera, deltaTime);
-
+    void onRender() override {
         camera.getViewMatrix();
         camera.getProjMatrix(true);
-        bgfx::setViewTransform(kClearView, camera.viewMatrix.data(), camera.projMatrix.data());
+        bgfx::setViewTransform(kMainView, camera.viewMatrix.data(), camera.projMatrix.data());
 
-        bgfx::touch(kClearView);
+        bgfx::touch(kMainView);
 
-        bgfx::setVertexBuffer(0, vbHandle);
-        bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS);
-        bgfx::submit(kClearView, program);
-
-        bgfx::frame();
+        mesh.stage(kMainView);
+        material->bind();
+        bgfx::submit(kMainView, material->program.handle());
     }
 
-    bgfx::shutdown();
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    void onShutdown() override {
+        if (bgfx::isValid(vbHandle)) {
+            bgfx::destroy(vbHandle);
+            vbHandle = BGFX_INVALID_HANDLE;
+        }
+        material.reset();
+        mesh.destroy();
+    }
+};
 
+int main() {
+    MinecraftClone game;
+    game.init();
+    game.run();
+    game.shutdown();
     return 0;
 }
