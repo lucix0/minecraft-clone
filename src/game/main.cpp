@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+
 #include <bx/bx.h>
 #include <bgfx/bgfx.h>
 
@@ -12,6 +13,7 @@
 #include "game/chunk.h"
 #include "game/chunk_builder.h"
 #include "game/chunk_mesh.h"
+#include "game/world.h"
 
 class MinecraftClone : public application {
 public:
@@ -19,6 +21,7 @@ public:
     bgfx::VertexLayout layout;
     std::unique_ptr<Material> material;
     ChunkMesh mesh;
+    World world;
 
     double lastMouseX = 0.0, lastMouseY = 0.0;
     bool firstMouse = true;
@@ -91,6 +94,8 @@ protected:
 
     void onUpdate(float dt) override {
         processInput(window, camera, dt);
+
+        
     }
 
     void onRender() override {

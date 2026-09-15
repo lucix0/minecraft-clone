@@ -48,6 +48,14 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glfw)
 
+# --- BS::thread_pool ---
+FetchContent_Declare(
+        thread_pool
+        GIT_REPOSITORY https://github.com/bshoshany/thread-pool.git
+        GIT_TAG        v5.1.0
+)
+FetchContent_MakeAvailable(thread_pool)
+
 add_executable(${PROJECT_NAME}
         src/game/main.cpp
         src/engine/shader_program.cpp
@@ -67,10 +75,14 @@ add_executable(${PROJECT_NAME}
         include/game/block_type.h
         include/game/vertex.h
         include/game/chunk_mesh.h
+        src/game/world.cpp
+        include/game/world.h
+        src/game/chunk_streamer.cpp
+        include/game/chunk_streamer.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/src include
+    ${CMAKE_SOURCE_DIR}/src ${thread_pool_SOURCE_DIR}/include include
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
