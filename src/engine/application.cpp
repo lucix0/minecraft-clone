@@ -1,4 +1,4 @@
-#include "include/application.h"
+#include "../include/engine/application.h"
 #include <iostream>
 
 bool application::init(int width, int height, const std::string& name) {
@@ -45,7 +45,11 @@ bool application::init(int width, int height, const std::string& name) {
     bgfx::setViewClear(kClearView, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
     bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
 
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     onInit();
+
+    return true;
 }
 
 void application::run() {
@@ -60,6 +64,8 @@ void application::run() {
         double currentTime = glfwGetTime();
         float deltaTime = float(currentTime - lastFrameTime);
         lastFrameTime = currentTime;
+
+        bgfx::touch(kMainView);
 
         onUpdate(deltaTime);
         onRender();

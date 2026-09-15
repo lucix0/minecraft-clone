@@ -49,19 +49,26 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glfw)
 
 add_executable(${PROJECT_NAME}
-    src/main.cpp
-        src/shader_program.cpp
-        src/material.cpp
-        src/texture.cpp
-        src/stb_image.cpp
-        src/Application.cpp
-        src/include/Application.h
-        src/Mesh.cpp
-        src/include/Mesh.h
+        src/game/main.cpp
+        src/engine/shader_program.cpp
+        src/engine/material.cpp
+        src/engine/texture.cpp
+        src/engine/stb_image.cpp
+        src/engine/application.cpp
+        include/engine/application.h
+        src/engine/mesh.cpp
+        include/engine/mesh.h
+        src/game/camera.cpp
+        include/game/camera.h
+        src/game/Chunk.cpp
+        include/game/chunk.h
+        src/game/chunk_builder.cpp
+        include/game/chunk_builder.h
+        include/game/block_type.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/include
+    ${CMAKE_SOURCE_DIR}/src include
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

@@ -1,4 +1,4 @@
-#include <include/shader_program.h>
+#include <engine/shader_program.h>
 #include <fstream>
 #include <iostream>
 
@@ -49,6 +49,13 @@ ShaderProgram::ShaderProgram(const std::string& name) {
 }
 
 ShaderProgram::~ShaderProgram() {
-    bgfx::destroy(m_program);
-    bgfx::destroy(m_sampler);
+    if (bgfx::isValid(m_program)) {
+        bgfx::destroy(m_program);
+        m_program = BGFX_INVALID_HANDLE;
+    }
+
+    if (bgfx::isValid(m_sampler)) {
+        bgfx::destroy(m_sampler);
+        m_sampler = BGFX_INVALID_HANDLE;
+    }
 }

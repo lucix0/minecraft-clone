@@ -1,31 +1,14 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include <string>
 #include <bx/bx.h>
 #include <bgfx/bgfx.h>
-#include <include/stb_image.h>
 
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+#include "engine/mesh.h"
+#include "engine/application.h"
+#include "engine/material.h"
 
-#include "mesh.h"
-#include "include/application.h"
-
-#if BX_PLATFORM_LINUX
-    #define GLFW_EXPOSE_NATIVE_X11
-    #include <GLFW/glfw3native.h>
-#elif BX_PLATFORM_WINDOWS
-    #define GLFW_EXPOSE_NATIVE_WIN32
-    #include <GLFW/glfw3native.h>
-#elif BX_PLATFORM_OSX
-    #define GLFW_EXPOSE_NATIVE_COCOA
-    #include <GLFW/glfw3native.h>
-#endif
-
-#include "include/camera.h"
-#include "include/shader_program.h"
-#include "material.h"
+#include "game/camera.h"
 
 struct Vertex {
     float x, y, z;
@@ -37,12 +20,12 @@ class MinecraftClone : public application {
 public:
     Camera camera;
     bgfx::VertexLayout layout;
-    bgfx::VertexBufferHandle vbHandle = BGFX_INVALID_HANDLE;
     std::unique_ptr<Material> material;
     Mesh mesh;
 
     double lastMouseX = 0.0, lastMouseY = 0.0;
     bool firstMouse = true;
+    bool cursorLock = true;
 
     std::vector<Vertex> triangle = {
         // Front face
@@ -128,6 +111,7 @@ protected:
 
         mesh.upload(triangle.data(), triangle.size(), layout);
         material = std::make_unique<Material>("test.png", "triangle");
+        material->render_state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
     }
 
     void onUpdate(float dt) override {
@@ -139,18 +123,12 @@ protected:
         camera.getProjMatrix(true);
         bgfx::setViewTransform(kMainView, camera.viewMatrix.data(), camera.projMatrix.data());
 
-        bgfx::touch(kMainView);
-
         mesh.stage(kMainView);
         material->bind();
         bgfx::submit(kMainView, material->program.handle());
     }
 
     void onShutdown() override {
-        if (bgfx::isValid(vbHandle)) {
-            bgfx::destroy(vbHandle);
-            vbHandle = BGFX_INVALID_HANDLE;
-        }
         material.reset();
         mesh.destroy();
     }
@@ -158,7 +136,7 @@ protected:
 
 int main() {
     MinecraftClone game;
-    game.init();
+    if (!game.init()) return 1;
     game.run();
     game.shutdown();
     return 0;

@@ -1,6 +1,6 @@
 #pragma once
-#include <shader_program.h>
-#include <texture.h>
+#include <engine/shader_program.h>
+#include <engine/texture.h>
 
 struct Material {
     ShaderProgram program;

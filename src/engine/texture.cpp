@@ -1,5 +1,5 @@
-#include <include/texture.h>
-#include <include/stb_image.h>
+#include <engine/texture.h>
+#include <engine/stb_image.h>
 
 Texture::Texture(const std::string& file_name) {
     int imageWidth, imageHeight, imageChannels;
@@ -13,4 +13,9 @@ Texture::Texture(const std::string& file_name) {
     stbi_image_free(img);
 }
 
-Texture::~Texture() { bgfx::destroy(m_handle); }
+Texture::~Texture() {
+    if (bgfx::isValid(m_handle)) {
+        bgfx::destroy(m_handle);
+        m_handle = BGFX_INVALID_HANDLE;
+    }
+}
