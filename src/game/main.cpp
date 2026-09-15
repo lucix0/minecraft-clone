@@ -9,55 +9,19 @@
 #include "engine/material.h"
 
 #include "game/camera.h"
-
-struct Vertex {
-    float x, y, z;
-    float r, g, b;
-    float u, v;
-};
+#include "game/chunk.h"
+#include "game/chunk_builder.h"
+#include "game/chunk_mesh.h"
 
 class MinecraftClone : public application {
 public:
     Camera camera;
     bgfx::VertexLayout layout;
     std::unique_ptr<Material> material;
-    Mesh mesh;
+    ChunkMesh mesh;
 
     double lastMouseX = 0.0, lastMouseY = 0.0;
     bool firstMouse = true;
-    bool cursorLock = true;
-
-    std::vector<Vertex> triangle = {
-        // Front face
-        Vertex { -1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f },
-        Vertex {  1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-        Vertex {  0.0f, 1.5f,  0.0f, 0.0f, 0.0f, 1.0f, 0.5f, 0.0f },
-
-        // Right face
-        Vertex {  1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f },
-        Vertex {  1.0f, 0.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-        Vertex {  0.0f, 1.5f,  0.0f, 0.0f, 0.0f, 1.0f, 0.5f, 0.0f },
-
-        // Back face
-        Vertex {  1.0f, 0.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f },
-        Vertex { -1.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f },
-        Vertex {  0.0f, 1.5f,  0.0f, 0.0f, 0.0f, 1.0f, 0.5f, 0.0f },
-
-        // Left face
-        Vertex { -1.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f },
-        Vertex { -1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f },
-        Vertex {  0.0f, 1.5f,  0.0f, 0.0f, 0.0f, 1.0f, 0.5f, 0.0f },
-
-        // Base triangle 1
-        Vertex { -1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
-        Vertex {  1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f },
-        Vertex {  1.0f, 0.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-
-        // Base triangle 2
-        Vertex { -1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
-        Vertex {  1.0f, 0.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-        Vertex { -1.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f },
-    };
 
 protected:
     void processInput(GLFWwindow* window, Camera& camera, float deltaTime) {
@@ -109,7 +73,18 @@ protected:
             .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
             .end();
 
-        mesh.upload(triangle.data(), triangle.size(), layout);
+        Chunk chunk;
+        for (int x = 0; x < CHUNK_SIZE; x++) {
+            for (int y = 0; y < CHUNK_SIZE; y++) {
+                for (int z = 0; z < CHUNK_SIZE; z++) {
+                    chunk.setBlock(x, y, z, STONE);
+                }
+            }
+        }
+
+        auto chunkVertices = ChunkBuilder::generateMesh(chunk);
+        mesh.mesh.upload(chunkVertices.data(), chunkVertices.size(), layout);
+
         material = std::make_unique<Material>("test.png", "triangle");
         material->render_state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
     }
@@ -123,14 +98,14 @@ protected:
         camera.getProjMatrix(true);
         bgfx::setViewTransform(kMainView, camera.viewMatrix.data(), camera.projMatrix.data());
 
-        mesh.stage(kMainView);
+        mesh.mesh.stage(kMainView);
         material->bind();
         bgfx::submit(kMainView, material->program.handle());
     }
 
     void onShutdown() override {
         material.reset();
-        mesh.destroy();
+        mesh.mesh.destroy();
     }
 };
 

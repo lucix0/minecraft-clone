@@ -65,6 +65,8 @@ add_executable(${PROJECT_NAME}
         src/game/chunk_builder.cpp
         include/game/chunk_builder.h
         include/game/block_type.h
+        include/game/vertex.h
+        include/game/chunk_mesh.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
