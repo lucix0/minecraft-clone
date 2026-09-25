@@ -5,6 +5,9 @@
 // Chunks are cubic, so only one length is needed.
 constexpr uint8_t CHUNK_SIZE = 32;
 
+// Tracks what step of generation a given chunk is in.
+enum class ChunkState { Queued, Generating, Generated, Meshing, Ready };
+
 class Chunk {
 public:
     void setBlock(uint8_t x, uint8_t y, uint8_t z, BlockType blockType);

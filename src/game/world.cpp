@@ -9,6 +9,10 @@ Chunk* World::getChunk(ChunkCoord coord) {
     return it != m_chunks.end() ? &it->second : nullptr;
 }
 
+void World::removeChunk(ChunkCoord coord) {
+    m_chunks.erase(coord);
+}
+
 ChunkCoord World::worldToChunkCoord(const bx::Vec3 position) {
     return {
         static_cast<int>(std::floor(position.x / CHUNK_SIZE)),

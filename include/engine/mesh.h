@@ -9,7 +9,7 @@ public:
                 const uint16_t* indices = nullptr,
                 uint32_t indexCount = 0);
     void destroy();
-    void stage(bgfx::ViewId viewId) const;
+    void stage() const;
 
     ~Mesh() { destroy(); }
 private:

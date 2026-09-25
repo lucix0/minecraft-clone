@@ -70,8 +70,8 @@ add_executable(${PROJECT_NAME}
         include/game/camera.h
         src/game/Chunk.cpp
         include/game/chunk.h
-        src/game/chunk_builder.cpp
-        include/game/chunk_builder.h
+        src/game/chunk_mesher.cpp
+        include/game/chunk_mesher.h
         include/game/block_type.h
         include/game/vertex.h
         include/game/chunk_mesh.h
@@ -79,10 +79,15 @@ add_executable(${PROJECT_NAME}
         include/game/world.h
         src/game/chunk_streamer.cpp
         include/game/chunk_streamer.h
+        src/game/chunk_renderer.cpp
+        include/game/chunk_renderer.h
+        src/game/chunk_generator.cpp
+        include/game/chunk_generator.h
+        third_party/FastNoiseLite.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/src ${thread_pool_SOURCE_DIR}/include include
+    ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/third_party ${thread_pool_SOURCE_DIR}/include include
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

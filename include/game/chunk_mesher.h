@@ -77,7 +77,7 @@ inline std::array<Vertex, 6> faceBack = {
 
 inline std::array faces = { faceRight, faceLeft, faceTop, faceBottom, faceFront, faceBack };
 
-class ChunkBuilder {
+class ChunkMesher {
 public:
-    static std::vector<Vertex> generateMesh(Chunk& chunk);
+    static std::vector<Vertex> buildMesh(Chunk& chunk);
 };

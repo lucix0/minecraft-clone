@@ -19,6 +19,7 @@ class World {
 public:
     Chunk& getOrCreateChunk(ChunkCoord coord);
     Chunk* getChunk(ChunkCoord coord);
+    void removeChunk(ChunkCoord coord);
 
     static ChunkCoord worldToChunkCoord(bx::Vec3 position);
 private:

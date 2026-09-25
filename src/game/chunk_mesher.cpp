@@ -1,6 +1,6 @@
-#include "game/chunk_builder.h"
+#include "game/chunk_mesher.h"
 
-std::vector<Vertex> ChunkBuilder::generateMesh(Chunk& chunk) {
+std::vector<Vertex> ChunkMesher::buildMesh(Chunk& chunk) {
     std::vector<Vertex> chunkVertices = {};
 
     for (int x = 0; x < CHUNK_SIZE; ++x) {

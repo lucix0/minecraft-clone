@@ -1,4 +1,4 @@
-#include "../include/engine/mesh.h"
+#include "engine/mesh.h"
 
 void Mesh::upload(const void* vertexData, uint32_t vertexCount, const bgfx::VertexLayout& layout, const uint16_t* indices, uint32_t indexCount) {
     const bgfx::Memory* mem = bgfx::copy(vertexData, vertexCount * layout.getStride());
@@ -23,7 +23,7 @@ void Mesh::destroy() {
     }
 }
 
-void Mesh::stage(bgfx::ViewId viewId) const {
+void Mesh::stage() const {
     bgfx::setVertexBuffer(0, vbh);
     if (hasIndices) bgfx::setIndexBuffer(ibh);
 }
