@@ -27,7 +27,7 @@ protected:
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             shouldClose = true;
 
-        const float moveSpeed = 5.0f * deltaTime;
+        const float moveSpeed = 10.0f * deltaTime;
         const float lookSpeed = 0.0025f;
 
         bx::Vec3 forward = camera.getForward();
@@ -86,7 +86,8 @@ protected:
     }
 
     void onShutdown() override {
-
+        cStreamer.reset();
+        cRenderer.reset();
     }
 };
 

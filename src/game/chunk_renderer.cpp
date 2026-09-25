@@ -13,7 +13,7 @@ ChunkRenderer::ChunkRenderer() {
     assert(m_layout.getStride() == sizeof(Vertex));
 
     // TODO: Replace texture and shader program with actual chunk-specific ones
-    m_material = std::make_unique<Material>("test.png", "triangle");
+    m_material = std::make_unique<Material>("block_textures.png", "triangle");
     m_material->render_state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
 }
 

@@ -3,7 +3,7 @@
 
 Texture::Texture(const std::string& file_name) {
     int imageWidth, imageHeight, imageChannels;
-    stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(false);
     unsigned char *img = stbi_load(std::string("textures/" + file_name).c_str(), &imageWidth, &imageHeight, &imageChannels, 4);
     if (img == nullptr) {
         printf("Error in loading the image\n");

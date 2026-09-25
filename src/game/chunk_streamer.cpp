@@ -89,8 +89,17 @@ void ChunkStreamer::dispatchMeshing(ChunkCoord coord) {
     Chunk* chunk = &m_world.getOrCreateChunk(coord);
     m_states.at(coord) = ChunkState::Meshing;
 
-    m_pool.detach_task([this, coord, chunk] {
-        std::vector<Vertex> verts = m_builder.buildMesh(*chunk);
+    // Get neighbor chunks for chunk face calculations.
+    std::vector<Chunk*> neighbors{};
+    neighbors.push_back(&m_world.getOrCreateChunk({coord.x+1, coord.y, coord.z}));
+    neighbors.push_back(&m_world.getOrCreateChunk({coord.x-1, coord.y, coord.z}));
+    neighbors.push_back(&m_world.getOrCreateChunk({coord.x, coord.y+1, coord.z}));
+    neighbors.push_back(&m_world.getOrCreateChunk({coord.x, coord.y-1, coord.z}));
+    neighbors.push_back(&m_world.getOrCreateChunk({coord.x, coord.y, coord.z+1}));
+    neighbors.push_back(&m_world.getOrCreateChunk({coord.x, coord.y, coord.z-1}));
+
+    m_pool.detach_task([this, coord, chunk, neighbors] {
+        std::vector<Vertex> verts = m_builder.buildMesh(*chunk, neighbors);
 
         std::lock_guard lock(m_completedMutex);
         m_completed.push_back({coord, CompletedTask::Kind::Meshed, std::move(verts)});

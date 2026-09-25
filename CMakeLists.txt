@@ -74,7 +74,6 @@ add_executable(${PROJECT_NAME}
         include/game/chunk_mesher.h
         include/game/block_type.h
         include/game/vertex.h
-        include/game/chunk_mesh.h
         src/game/world.cpp
         include/game/world.h
         src/game/chunk_streamer.cpp
