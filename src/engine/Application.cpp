@@ -1,7 +1,7 @@
-#include "../include/engine/application.h"
+#include "engine/Application.h"
 #include <iostream>
 
-bool application::init(int width, int height, const std::string& name) {
+bool Application::init(int width, int height, const std::string& name) {
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW\n";
         return false;
@@ -41,9 +41,7 @@ bool application::init(int width, int height, const std::string& name) {
         return false;
     }
 
-    const bgfx::ViewId kClearView = 0;
-    bgfx::setViewClear(kClearView, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
-    bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
+    m_dRender = std::make_unique<DeferredRenderer>();
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -52,30 +50,33 @@ bool application::init(int width, int height, const std::string& name) {
     return true;
 }
 
-void application::run() {
+void Application::run() {
     double lastFrameTime = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        if (shouldClose) {
-            glfwSetWindowShouldClose(window, true);
-        }
+        if (shouldClose) glfwSetWindowShouldClose(window, true);
 
         double currentTime = glfwGetTime();
         float deltaTime = float(currentTime - lastFrameTime);
         lastFrameTime = currentTime;
 
-        bgfx::touch(kMainView);
+        bgfx::touch(m_dRender->geometryView());
 
         onUpdate(deltaTime);
+
         onRender();
+
+        m_dRender->render();
 
         bgfx::frame();
     }
 }
 
-void application::shutdown() {
+void Application::shutdown() {
     onShutdown();
+
+    m_dRender.reset();
 
     bgfx::shutdown();
     glfwDestroyWindow(window);

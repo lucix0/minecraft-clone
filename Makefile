@@ -1,35 +1,31 @@
 BGFX_SRC = third_party/bgfx
-
 SHADERC = $(BGFX_SRC)/shaderc
 
-SHADER_DIR = shaders
+SRC_DIR    = shaders/src
+BIN_DIR    = shaders/bin
+VARYING    = $(SRC_DIR)/varying.def.sc
+INCLUDES   = $(wildcard $(SRC_DIR)/*.sh)
 
-VERTEX_SHADER = $(SHADER_DIR)/src/vs_triangle.sc
-FRAGMENT_SHADER = $(SHADER_DIR)/src/fs_triangle.sc
+VS_SRC     = $(wildcard $(SRC_DIR)/vs_*.sc)
+FS_SRC     = $(wildcard $(SRC_DIR)/fs_*.sc)
+VS_BIN     = $(patsubst $(SRC_DIR)/%.sc,$(BIN_DIR)/%.bin,$(VS_SRC))
+FS_BIN     = $(patsubst $(SRC_DIR)/%.sc,$(BIN_DIR)/%.bin,$(FS_SRC))
 
-VERTEX_BIN = $(SHADER_DIR)/bin/vs_triangle.bin
-FRAGMENT_BIN = $(SHADER_DIR)/bin/fs_triangle.bin
+SHADERC_FLAGS = --platform osx --profile metal \
+                --varyingdef $(VARYING) \
+                -i $(BGFX_SRC) -i $(SRC_DIR)
 
-all: $(VERTEX_BIN) $(FRAGMENT_BIN)
-	mkdir -p shaders/bin
+.PHONY: all clean
+all: $(VS_BIN) $(FS_BIN)
 
-$(VERTEX_BIN): $(VERTEX_SHADER)
-	mkdir -p shaders/bin
-	$(SHADERC) -f $< -o $@ \
-		--type vertex \
-		--platform osx \
-		--profile metal \
-		--varyingdef $(SHADER_DIR)/src/varying.def.sc \
-		-i $(BGFX_SRC)
+$(BIN_DIR)/vs_%.bin: $(SRC_DIR)/vs_%.sc $(VARYING) $(INCLUDES) | $(BIN_DIR)
+	$(SHADERC) -f $< -o $@ --type vertex $(SHADERC_FLAGS)
 
-$(FRAGMENT_BIN): $(FRAGMENT_SHADER)
-	mkdir -p shaders/bin
-	$(SHADERC) -f $< -o $@ \
-		--type fragment \
-		--platform osx \
-		--profile metal \
-		--varyingdef $(SHADER_DIR)/src/varying.def.sc \
-		-i $(BGFX_SRC)
+$(BIN_DIR)/fs_%.bin: $(SRC_DIR)/fs_%.sc $(VARYING) $(INCLUDES) | $(BIN_DIR)
+	$(SHADERC) -f $< -o $@ --type fragment $(SHADERC_FLAGS)
+
+$(BIN_DIR):
+	mkdir -p $@
 
 clean:
-	rm -f $(VERTEX_BIN) $(FRAGMENT_BIN)
+	rm -f $(BIN_DIR)/*.bin

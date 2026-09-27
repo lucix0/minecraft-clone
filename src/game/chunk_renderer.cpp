@@ -6,6 +6,7 @@ ChunkRenderer::ChunkRenderer() {
     m_layout
             .begin()
             .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Normal, 4, bgfx::AttribType::Uint8, false, false)
             .add(bgfx::Attrib::Color0, 3, bgfx::AttribType::Float)
             .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
             .end();
@@ -13,7 +14,7 @@ ChunkRenderer::ChunkRenderer() {
     assert(m_layout.getStride() == sizeof(Vertex));
 
     // TODO: Replace texture and shader program with actual chunk-specific ones
-    m_material = std::make_unique<Material>("block_textures.png", "triangle");
+    m_material = std::make_unique<Material>("block_textures.png", "gbuffer");
     m_material->render_state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
 }
 
@@ -23,6 +24,11 @@ ChunkRenderer::~ChunkRenderer() {
 }
 
 void ChunkRenderer::upload(ChunkCoord coord, std::span<const Vertex> vertices) {
+    if (vertices.empty()) {
+        unload(coord);
+        return;
+    }
+
     if (auto p = m_meshes.find(coord); p != m_meshes.end()) {
         bgfx::destroy(p->second);
     }

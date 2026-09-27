@@ -4,7 +4,7 @@
 
 struct Camera {
     bx::Vec3 position = { 0.0f, 100.0f, 0.0f };
-    float yaw = 0.0f, pitch = 0.0f, fov = 90.0f, aspectRatio = 16.0f / 9.0f, nearPlane = 0.1f, farPlane = 100.0f;
+    float yaw = 0.0f, pitch = 0.0f, fov = 90.0f, aspectRatio = 16.0f / 9.0f, nearPlane = 0.1f, farPlane = 1000.0f;
     std::array<float, 16> viewMatrix{}, projMatrix{};
 
     bx::Vec3 getForward() const {

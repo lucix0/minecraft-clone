@@ -83,6 +83,8 @@ add_executable(${PROJECT_NAME}
         src/game/chunk_generator.cpp
         include/game/chunk_generator.h
         third_party/FastNoiseLite.h
+        src/engine/deferred_renderer.cpp
+        include/engine/deferred_renderer.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

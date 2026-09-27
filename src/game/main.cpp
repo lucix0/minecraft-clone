@@ -1,7 +1,7 @@
 #include <bx/bx.h>
 #include <bgfx/bgfx.h>
 
-#include "engine/application.h"
+#include "engine/Application.h"
 
 #include "game/camera.h"
 #include "game/chunk_mesher.h"
@@ -9,7 +9,7 @@
 #include "game/chunk_streamer.h"
 #include "game/world.h"
 
-class MinecraftClone : public application {
+class MinecraftClone : public Application {
 public:
     Camera camera;
     World world;
@@ -74,15 +74,15 @@ protected:
     void onUpdate(float dt) override {
         processInput(window, camera, dt);
 
-        cStreamer->update(camera.position, 2);
+        cStreamer->update(camera.position, 4);
     }
 
     void onRender() override {
         camera.getViewMatrix();
         camera.getProjMatrix(true);
-        bgfx::setViewTransform(kMainView, camera.viewMatrix.data(), camera.projMatrix.data());
+        bgfx::setViewTransform(m_dRender->geometryView(), camera.viewMatrix.data(), camera.projMatrix.data());
 
-        cRenderer->renderAll(kMainView);
+        cRenderer->renderAll(m_dRender->geometryView());
     }
 
     void onShutdown() override {
