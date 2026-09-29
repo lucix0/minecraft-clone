@@ -2,9 +2,6 @@
 #include <fstream>
 #include <iostream>
 
-#include "bx/math.h"
-
-
 bgfx::ShaderHandle ShaderProgram::loadShader(const std::string& name, ShaderType type) {
     // Create shader file path depending on type of shader
     std::string path{};
@@ -37,9 +34,15 @@ bgfx::ShaderHandle ShaderProgram::loadShader(const std::string& name, ShaderType
 ShaderProgram::ShaderProgram(const std::string& name) {
     auto vShader = loadShader(name, ShaderType::VERTEX);
     auto fShader = loadShader(name, ShaderType::FRAGMENT);
+    if (!bgfx::isValid(vShader) || !bgfx::isValid(fShader)) {
+        if (bgfx::isValid(vShader)) bgfx::destroy(vShader);
+        if (bgfx::isValid(fShader)) bgfx::destroy(fShader);
+    }
 
-    m_program = bgfx::createProgram(vShader, fShader, true);
-    m_sampler = bgfx::createUniform("s_texture", bgfx::UniformType::Sampler);
+    if (bgfx::isValid(vShader) && bgfx::isValid(fShader)) {
+        m_program = bgfx::createProgram(vShader, fShader, true);
+        m_sampler = bgfx::createUniform("s_texture", bgfx::UniformType::Sampler);
+    }
 }
 
 ShaderProgram::~ShaderProgram() {
