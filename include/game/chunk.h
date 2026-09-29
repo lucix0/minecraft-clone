@@ -15,10 +15,6 @@ public:
 
     static int coordToIndex(uint8_t x, uint8_t y, uint8_t z);
     static void indexToCoord(int index, uint8_t& x, uint8_t& y, uint8_t& z);
-
-    bool isDirty() const { return dirty; }
-    void clearDirty() { dirty = false; }
 private:
     std::array<BlockType, CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE> blocks = {};
-    bool dirty = true;
 };

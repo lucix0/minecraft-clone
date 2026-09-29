@@ -64,8 +64,6 @@ add_executable(${PROJECT_NAME}
         src/engine/stb_image.cpp
         src/engine/Application.cpp
         include/engine/Application.h
-        src/engine/mesh.cpp
-        include/engine/mesh.h
         src/game/camera.cpp
         include/game/camera.h
         src/game/Chunk.cpp

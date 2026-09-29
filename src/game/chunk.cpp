@@ -3,7 +3,6 @@
 
 void Chunk::setBlock(uint8_t x, uint8_t y, uint8_t z, BlockType blockType) {
     blocks[coordToIndex(x, y, z)] = blockType;
-    dirty = true;
 }
 
 BlockType Chunk::getBlock(uint8_t x, uint8_t y, uint8_t z) const {
