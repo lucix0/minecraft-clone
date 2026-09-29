@@ -1,4 +1,4 @@
-#include "engine/Application.h"
+#include "engine/application.h"
 #include <iostream>
 
 bool Application::init(int width, int height, const std::string& name) {

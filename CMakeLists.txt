@@ -62,8 +62,8 @@ add_executable(${PROJECT_NAME}
         src/engine/material.cpp
         src/engine/texture.cpp
         src/engine/stb_image.cpp
-        src/engine/application.cpp
-        include/engine/application.h
+        src/engine/Application.cpp
+        include/engine/Application.h
         src/engine/mesh.cpp
         include/engine/mesh.h
         src/game/camera.cpp

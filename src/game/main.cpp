@@ -1,7 +1,7 @@
 #include <bx/bx.h>
 #include <bgfx/bgfx.h>
 
-#include "engine/Application.h"
+#include "engine/application.h"
 
 #include "game/camera.h"
 #include "game/chunk_mesher.h"
