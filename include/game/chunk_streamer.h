@@ -35,6 +35,10 @@ private:
 
     std::unordered_map<ChunkCoord, ChunkState, ChunkCoordHash> m_states;
 
+    bool isGenerated(ChunkCoord c) const;
+
+    static std::array<ChunkCoord, 6> neighborCoords(ChunkCoord coord);
+
     void drain();
     void dispatchGeneration(ChunkCoord coord);
     void dispatchMeshing(ChunkCoord coord);

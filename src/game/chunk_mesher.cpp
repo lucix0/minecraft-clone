@@ -1,6 +1,6 @@
 #include "game/chunk_mesher.h"
 
-std::vector<Vertex> ChunkMesher::buildMesh(Chunk& chunk, std::vector<Chunk*> neighbors) {
+std::vector<Vertex> ChunkMesher::buildMesh(Chunk& chunk, std::array<Chunk*, 6> neighbors) {
     std::vector<Vertex> chunkVertices = {};
 
     for (int x = 0; x < CHUNK_SIZE; ++x) {
@@ -20,10 +20,20 @@ std::vector<Vertex> ChunkMesher::buildMesh(Chunk& chunk, std::vector<Chunk*> nei
                                 ++i;
                                 continue;
                             }
+                        } else {
+                            if (neighbors[0]->getBlock(0, y, z) != AIR) {
+                                ++i;
+                                continue;
+                            }
                         }
                     } else if (i == 1) {
                         if (x != 0) {
                             if (chunk.getBlock(x-1, y, z) != AIR) {
+                                ++i;
+                                continue;
+                            }
+                        } else {
+                            if (neighbors[1]->getBlock(CHUNK_SIZE-1, y, z) != AIR) {
                                 ++i;
                                 continue;
                             }
@@ -34,10 +44,20 @@ std::vector<Vertex> ChunkMesher::buildMesh(Chunk& chunk, std::vector<Chunk*> nei
                                 ++i;
                                 continue;
                             }
+                        } else {
+                            if (neighbors[2]->getBlock(x, 0, z) != AIR) {
+                                ++i;
+                                continue;
+                            }
                         }
                     } else if (i == 3) {
                         if (y != 0) {
                             if (chunk.getBlock(x, y-1, z) != AIR) {
+                                ++i;
+                                continue;
+                            }
+                        } else {
+                            if (neighbors[3]->getBlock(x, CHUNK_SIZE-1, z) != AIR) {
                                 ++i;
                                 continue;
                             }
@@ -48,10 +68,20 @@ std::vector<Vertex> ChunkMesher::buildMesh(Chunk& chunk, std::vector<Chunk*> nei
                                 ++i;
                                 continue;
                             }
+                        } else {
+                            if (neighbors[4]->getBlock(x, y, 0) != AIR) {
+                                ++i;
+                                continue;
+                            }
                         }
                     } else if (i == 5) {
                         if (z != 0) {
                             if (chunk.getBlock(x, y, z-1) != AIR) {
+                                ++i;
+                                continue;
+                            }
+                        } else {
+                            if (neighbors[5]->getBlock(x, y, CHUNK_SIZE-1) != AIR) {
                                 ++i;
                                 continue;
                             }

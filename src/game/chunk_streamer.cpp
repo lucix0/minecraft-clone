@@ -6,7 +6,7 @@ ChunkStreamer::ChunkStreamer(World& world, ChunkMesher& builder, ChunkGenerator&
 void ChunkStreamer::update(bx::Vec3 playerPosition, int loadRadius) {
     drain();
 
-    int unRadiusDelta = 0;
+    int unRadiusDelta = 1;
 
     ChunkCoord playerChunk = World::worldToChunkCoord(playerPosition);
     int xMin = playerChunk.x - loadRadius;
@@ -36,9 +36,18 @@ void ChunkStreamer::update(bx::Vec3 playerPosition, int loadRadius) {
         if ((coord.x < xMin - unRadiusDelta || coord.x > xMax + unRadiusDelta ||
              coord.y < yMin - unRadiusDelta || coord.y > yMax + unRadiusDelta ||
              coord.z < zMin - unRadiusDelta || coord.z > zMax + unRadiusDelta) && (state == ChunkState::Queued || state == ChunkState::Generated || state == ChunkState::Ready)) {
+            std::array nCoords = neighborCoords(coord);
+
+            // Don't unload if this chunk is needed by any meshing neighbors
+            for (int i = 0; i < 6; ++i) {
+                auto c = nCoords[i];
+                if (auto s = m_states.find(c); s != m_states.end() && s->second == ChunkState::Meshing) return false;
+            }
+
             // Clean up other data related to this chunk that's to be removed
             m_world.removeChunk(coord);
             m_renderer.unload(coord);
+
 
             return true;
         }
@@ -54,6 +63,25 @@ void ChunkStreamer::update(bx::Vec3 playerPosition, int loadRadius) {
         if (s.second == ChunkState::Generated)
             dispatchMeshing(s.first);
     }
+}
+
+bool ChunkStreamer::isGenerated(ChunkCoord c) const {
+    bool generated = false;
+    if (auto s = m_states.find(c); s != m_states.end() && s->second >= ChunkState::Generated) {
+        generated = true;
+    }
+    return generated;
+}
+
+std::array<ChunkCoord, 6> ChunkStreamer::neighborCoords(ChunkCoord coord) {
+    return {
+        ChunkCoord{coord.x+1, coord.y, coord.z},
+        ChunkCoord{coord.x-1, coord.y, coord.z},
+        ChunkCoord{coord.x, coord.y+1, coord.z},
+        ChunkCoord{coord.x, coord.y-1, coord.z},
+        ChunkCoord{coord.x, coord.y, coord.z+1},
+        ChunkCoord{coord.x, coord.y, coord.z-1}
+    };
 }
 
 void ChunkStreamer::drain() {
@@ -86,18 +114,19 @@ void ChunkStreamer::dispatchGeneration(ChunkCoord coord) {
 }
 
 void ChunkStreamer::dispatchMeshing(ChunkCoord coord) {
-    Chunk* chunk = &m_world.getOrCreateChunk(coord);
+    Chunk* chunk = m_world.getChunk(coord);
+
+    // Get neighbor chunks for chunk face calculations. Return early if a neighbor isn't ready for block check.
+    std::array<Chunk*, 6> neighbors{};
+    auto nCoords = neighborCoords(coord);
+
+    for (int i = 0; i < 6; ++i) {
+        auto c = nCoords[i];
+        if (isGenerated(c)) neighbors[i] = m_world.getChunk(c);
+        else return;
+    }
+
     m_states.at(coord) = ChunkState::Meshing;
-
-    // Get neighbor chunks for chunk face calculations.
-    std::vector<Chunk*> neighbors{};
-    neighbors.push_back(&m_world.getOrCreateChunk({coord.x+1, coord.y, coord.z}));
-    neighbors.push_back(&m_world.getOrCreateChunk({coord.x-1, coord.y, coord.z}));
-    neighbors.push_back(&m_world.getOrCreateChunk({coord.x, coord.y+1, coord.z}));
-    neighbors.push_back(&m_world.getOrCreateChunk({coord.x, coord.y-1, coord.z}));
-    neighbors.push_back(&m_world.getOrCreateChunk({coord.x, coord.y, coord.z+1}));
-    neighbors.push_back(&m_world.getOrCreateChunk({coord.x, coord.y, coord.z-1}));
-
     m_pool.detach_task([this, coord, chunk, neighbors] {
         std::vector<Vertex> verts = m_builder.buildMesh(*chunk, neighbors);
 
